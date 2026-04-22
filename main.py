@@ -21,12 +21,16 @@ def load_conf_dynaminic(category: str):
     cfg = compose(config_name=f"intent/{category}")
 
     # `compose(...)` 返回的是 OmegaConf/DictConfig 对象。
-    # 例如 movement.yaml 的内容大致会变成：
+    # 当这里用 `config_name="intent/movement"` 去 compose 时，
+    # Hydra 会把结果挂在顶层 `intent` 节点下，所以转成普通 dict 后，
+    # 你当前项目里打印出来的大致会是：
     # {
-    #   "category": "movement",
-    #   "description": "...",
-    #   "target_count": 300,
-    #   ...
+    #   "intent": {
+    #     "category": "movement",
+    #     "description": "...",
+    #     "target_count": 300,
+    #     ...
+    #   }
     # }
     #
     # `to_container(..., resolve=True)` 的作用：
@@ -35,14 +39,18 @@ def load_conf_dynaminic(category: str):
     container = OmegaConf.to_container(cfg, resolve=True)
 
     # 这一段是兼容性写法。
-    # 某些 Hydra 配置会长这样：
-    #   intent:
-    #     category: movement
-    #     ...
-    # 如果最外层有个 `intent` 包裹，就只把里面真正的业务配置取出来。
+    # 这里会进入 if。
+    # 虽然 `conf/intent/movement.yaml` 文件本身没有显式写 `intent:`，
+    # 但因为 compose 时使用的是 `intent/movement` 这个配置名，
+    # Hydra 会把它作为 `intent` 这个 config group 的选中结果挂进来。
     #
-    # 你当前的 movement.yaml 顶层并没有 `intent:` 这一层，
-    # 所以这里一般不会进入 if，`container` 会原样返回。
+    # 所以下面这一步是在把真正的业务配置剥出来，返回：
+    # {
+    #   "category": "movement",
+    #   "description": "...",
+    #   "target_count": 300,
+    #   ...
+    # }
     if "intent" in container:
         container = container["intent"]
     return container

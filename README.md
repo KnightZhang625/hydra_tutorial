@@ -286,14 +286,74 @@ dimension_weights:
   noise: 0.10
 ```
 
-它的顶层没有 `intent:` 这一层，所以目前这段判断通常不会触发：
+虽然这个文件文本里没有显式写 `intent:`，但这里是通过：
+
+```python
+compose(config_name="intent/movement")
+```
+
+来加载它的。对 Hydra 来说，这表示“从 `intent` 这个 config group 里选中 `movement`”，
+所以 compose 出来的结果会先挂到顶层 `intent` 节点下。
+
+也就是说，`OmegaConf.to_container(...)` 之后，当前项目里拿到的 `container` 大致是：
+
+```python
+{
+    "intent": {
+        "category": "movement",
+        "description": "玩家对队友的移动指令：去某地、跟上、停下、转向等",
+        "target_count": 300,
+        "dimension_weights": {
+            "direct": 0.5,
+            "state_sensitive": 0.25,
+            "boundary": 0.15,
+            "noise": 0.1,
+        },
+    }
+}
+```
+
+所以你现在这段判断通常是会触发的：
 
 ```python
 if "intent" in container:
     container = container["intent"]
 ```
 
-这段更像是兼容性写法，目的是兼容另一种配置结构：
+然后通过：
+
+```python
+container = container["intent"]
+```
+
+把真正的业务配置剥出来，变成：
+
+```python
+{
+    "category": "movement",
+    "description": "玩家对队友的移动指令：去某地、跟上、停下、转向等",
+    "target_count": 300,
+    "dimension_weights": {
+        "direct": 0.5,
+        "state_sensitive": 0.25,
+        "boundary": 0.15,
+        "noise": 0.1,
+    },
+}
+```
+
+所以这段更准确地说不是“兼容另一种配置结构”，而是在处理 Hydra compose 这个 config group 时产生的包裹层。
+
+如果你以后改成别的加载方式，或者返回结构本来就已经是业务层字典，那这段判断才可能变成一种兼容性保护。
+
+很多人第一次看到这里会困惑，原因就在于：
+
+- YAML 文件内容本身没有写 `intent:`
+- 但 Hydra 会根据 `intent/movement` 这个配置名，把结果挂到 `intent` 节点下
+
+这也是“文件长什么样”和“compose 后的配置树长什么样”不完全一样的一个典型例子。
+
+如果你手动写成另一种配置结构，例如：
 
 ```yaml
 intent:
@@ -447,31 +507,7 @@ python main.py task=l2_classifier
 
 这会比改 yaml 更灵活。
 
-## 15. 当前仓库的运行说明
-
-我尝试在当前环境运行了：
-
-```bash
-python3 main.py
-```
-
-但本地报错：
-
-```text
-ModuleNotFoundError: No module named 'hydra'
-```
-
-这说明当前环境还没安装 Hydra 依赖，所以这份教程目前是根据代码结构和配置关系写成的，还没有在这个运行环境里做实际执行验证。
-
-如果你后面装上依赖，例如：
-
-```bash
-pip install hydra-core
-```
-
-就可以直接跑这份示例代码了。
-
-## 16. 一句话总结
+## 15. 总结
 
 在这个项目里，Hydra 做了两层事情：
 
