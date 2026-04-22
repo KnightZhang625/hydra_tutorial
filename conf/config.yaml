@@ -1,0 +1,10 @@
+# 因为 defaults 是 Hydra 规定必须是一个 list（叫 Defaults List），
+# 而且顺序有意义——列表里靠后的会覆盖靠前的配置。所以每一项前面都要加 -，表示"列表的第 N 项"。
+defaults:
+  - _self_
+  # 去 conf/task/ 这个 config group 下面, 选中 l1_classifier.yaml, 把这个文件的内容挂到 cfg.task 下面
+  - task: l1_classifier
+
+run:
+  seed: 42
+  n_workers: 4

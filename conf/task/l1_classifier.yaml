@@ -1,0 +1,8 @@
+defaults: [_base, _self_]
+
+name: l1_classifier
+pipeline: l1                 # 调度到 pipelines/l1_pipeline.py
+
+# 10 类候选（与 FPS AI 队友意图理解通用框架.md §6.1 一致）
+categories:
+  - movement

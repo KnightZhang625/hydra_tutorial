@@ -1,0 +1,9 @@
+category: movement
+description: "玩家对队友的移动指令：去某地、跟上、停下、转向等"
+target_count: 300
+
+dimension_weights:
+  direct: 0.50
+  state_sensitive: 0.25
+  boundary: 0.15
+  noise: 0.10

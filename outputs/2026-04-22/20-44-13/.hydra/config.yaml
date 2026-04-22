@@ -1,0 +1,7 @@
+run:
+  seed: 42
+  n_workers: 4
+task:
+  name: l1_classifier
+  pipeline: l1
+  categories: []
